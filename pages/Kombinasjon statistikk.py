@@ -105,3 +105,12 @@ df_kombi = kombi_statistikk(st.session_state.velg_antall_kombi)
 
 st.write("Alle kombinasjoner med antall treninger:")
 st.dataframe(df_kombi)
+
+
+# Lager visning slik at èn kan se hvilke kombinasjoner den finnes i 
+velg_navn = st.selectbox("Sjekk hvilke kombinasjon du finnes i:", sorted(df['Navn'].unique()),key="velg_navn")
+
+st.write("Alle kombinasjoner med antall treninger:")
+
+# Sorterer for sikkerhetsskyld
+st.dataframe(df_kombi.filter(pl.col('Kombinasjon').str.contains(st.session_state.velg_navn)).sort(by = ['Antall treninger'],descending=True))
