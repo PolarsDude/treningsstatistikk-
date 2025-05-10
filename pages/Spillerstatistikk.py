@@ -1,5 +1,5 @@
 import polars as pl
-from data_prep import prep
+from utils import prep
 import streamlit as st
 import seaborn as sns
 import matplotlib.pyplot as plt
