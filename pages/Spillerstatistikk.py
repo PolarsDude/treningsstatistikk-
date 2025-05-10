@@ -33,6 +33,9 @@ ax.set_title(f'Antall treninger per måned for {st.session_state.velg_person}')
 ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 ax.set(ylabel=None) 
 
+# Roter x-labels
+ax.tick_params(axis='x', rotation=50)
+
 
 # Viser figuren i Streamlit
 st.pyplot(fig)
