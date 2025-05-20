@@ -4,3 +4,4 @@ polars-xdt==0.15.0
 seaborn==0.13.0
 matplotlib==3.9.3
 fastexcel==0.13.0
+datetime==5.5
