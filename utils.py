@@ -2,25 +2,31 @@ import polars as pl
 import polars.selectors as cs
 from datetime import date
 
-def prep(df):
-
- # Fikser på dato kolonne
- df = (df
- .with_columns(
+def datoformat_mapping(df):
+  # Fikser på dato kolonne
+  df = (df
+   .with_columns(
              pl.col('Dato').cast(pl.String).str.strptime(pl.Date, "%Y%m%d", strict=False)
                )
- 
+   )
+  return df
+
+
+def prep(df):
+
+ # Henter ut div dato kolonner 
+ df = (df
+       
  # Henter ut år måned dag
- .with_columns(pl.col('Dato').dt.year().alias('År'),
-               pl.col('Dato').dt.month().alias('Måned'),
-               pl.col('Dato').dt.weekday().alias('Dag')
+ .with_columns(pl.col('Treningsdato').dt.year().alias('År'),
+               pl.col('Treningsdato').dt.month().alias('Måned'),
+               pl.col('Treningsdato').dt.weekday().alias('Dag')
                )
  )
  
  
  # Mapper måned nr til navn
  df = (df
-     .with_columns(pl.col("Måned").alias('Måned nr'))
      .with_columns(
       pl.when(pl.col("Måned") == 1).then(pl.lit("Januar"))
       .when(pl.col("Måned") == 2).then(pl.lit("Februar"))
@@ -35,16 +41,16 @@ def prep(df):
       .when(pl.col("Måned") == 11).then(pl.lit("November"))
       .when(pl.col("Måned") == 12).then(pl.lit("Desember"))
       .otherwise(pl.lit("Ukjent"))
-      .alias("Måned")
+      .alias("Måned navn")
      )
      .with_columns(
-     pl.when(pl.col("Måned nr").is_in([12, 1, 2]))
+     pl.when(pl.col("Måned").is_in([12, 1, 2]))
       .then(pl.lit("vinter"))
-      .when(pl.col("Måned nr").is_in([3, 4, 5]))
+      .when(pl.col("Måned").is_in([3, 4, 5]))
       .then(pl.lit("vår"))
-      .when(pl.col("Måned nr").is_in([6, 7, 8]))
+      .when(pl.col("Måned").is_in([6, 7, 8]))
       .then(pl.lit("sommer"))
-      .when(pl.col("Måned nr").is_in([9, 10, 11]))
+      .when(pl.col("Måned").is_in([9, 10, 11]))
       .then(pl.lit("høst"))
       .otherwise(pl.lit("ukjent"))
       .alias("Årstid")
@@ -58,8 +64,8 @@ def prep(df):
 def dato_mapping_pub_trening(df):
  
  # Henter ut max og min dato
- aar_max = int(df.select('År').max().item())
- aar_min = int(df.select('År').min().item())
+ aar_max = int(df.select(pl.col('Dato').dt.year()).max().item())
+ aar_min = int(df.select(pl.col('Dato').dt.year()).min().item())
 
  alle_datoer = pl.DataFrame({'alle_dato':pl.date_range(date(aar_min, 1, 1), date(aar_max, 12, 1), "1d", eager=True)})
 
@@ -111,8 +117,7 @@ def dato_mapping_pub_trening(df):
  # Må ta en inner join fordi vi fjerner duplikater av tilfeller hvor treningsdato har 2 eller flere publiseringsdato
  df = (df
  .join(other = publiseringsdato,left_on='Dato',right_on='publiseringsdato',how = 'inner')
- .drop('Dato')
- .rename({'treningsdato':'Dato'})
+ .rename({'treningsdato':'Treningsdato'})
  )
 
  return df
