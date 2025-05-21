@@ -6,14 +6,14 @@ def prep(df):
 
  # Fikser på dato kolonne
  df = (df
- .with_columns(pl.col('Dato').cast(pl.String).str.slice(0,4).alias('År'),
-               pl.col('Dato').cast(pl.String).str.slice(4,2).alias('Måned'),
-               pl.col('Dato').cast(pl.String).str.slice(6,2).alias('Dag')
+ .with_columns(
+             pl.col('Dato').cast(pl.String).str.strptime(pl.Date, "%Y%m%d", strict=False)
                )
  
- # Gjør dag om k
- .with_columns(pl.concat_str(['År', 'Måned', 'Dag'], separator='-').cast(pl.Date).alias('Dato'),
-               pl.col('Måned','Dag').cast(pl.Int64)
+ # Henter ut år måned dag
+ .with_columns(pl.col('Dato').dt.year().alias('År'),
+               pl.col('Dato').dt.month().alias('Måned'),
+               pl.col('Dato').dt.weekday().alias('Dag')
                )
  )
  
