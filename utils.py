@@ -42,7 +42,7 @@ def prep(df):
  )
 
  # Identifiserer årstid
- df.with_columns(
+ df = df.with_columns(
     pl.when(pl.col("Måned nr").is_in([12, 1, 2]))
       .then(pl.lit("vinter"))
       .when(pl.col("Måned nr").is_in([3, 4, 5]))
