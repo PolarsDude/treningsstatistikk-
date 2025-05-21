@@ -12,53 +12,6 @@ def datoformat_mapping(df):
   return df
 
 
-def prep(df):
-
- # Henter ut div dato kolonner 
- df = (df
-       
- # Henter ut år måned dag
- .with_columns(pl.col('Treningsdato').dt.year().alias('År'),
-               pl.col('Treningsdato').dt.month().alias('Måned'),
-               pl.col('Treningsdato').dt.weekday().alias('Dag')
-               )
- )
- 
- 
- # Mapper måned nr til navn
- df = (df
-     .with_columns(
-      pl.when(pl.col("Måned") == 1).then(pl.lit("Januar"))
-      .when(pl.col("Måned") == 2).then(pl.lit("Februar"))
-      .when(pl.col("Måned") == 3).then(pl.lit("Mars"))
-      .when(pl.col("Måned") == 4).then(pl.lit("April"))
-      .when(pl.col("Måned") == 5).then(pl.lit("Mai"))
-      .when(pl.col("Måned") == 6).then(pl.lit("Juni"))
-      .when(pl.col("Måned") == 7).then(pl.lit("Juli"))
-      .when(pl.col("Måned") == 8).then(pl.lit("August"))
-      .when(pl.col("Måned") == 9).then(pl.lit("September"))
-      .when(pl.col("Måned") == 10).then(pl.lit("Oktober"))
-      .when(pl.col("Måned") == 11).then(pl.lit("November"))
-      .when(pl.col("Måned") == 12).then(pl.lit("Desember"))
-      .otherwise(pl.lit("Ukjent"))
-      .alias("Måned navn")
-     )
-     .with_columns(
-     pl.when(pl.col("Måned").is_in([12, 1, 2]))
-      .then(pl.lit("vinter"))
-      .when(pl.col("Måned").is_in([3, 4, 5]))
-      .then(pl.lit("vår"))
-      .when(pl.col("Måned").is_in([6, 7, 8]))
-      .then(pl.lit("sommer"))
-      .when(pl.col("Måned").is_in([9, 10, 11]))
-      .then(pl.lit("høst"))
-      .otherwise(pl.lit("ukjent"))
-      .alias("Årstid")
-  )
- )
-
-
- return df
 
 # Funksjon for å mappe publiseringsdato til treningsdato
 def dato_mapping_pub_trening(df):
@@ -119,5 +72,53 @@ def dato_mapping_pub_trening(df):
  .join(other = publiseringsdato,left_on='Dato',right_on='publiseringsdato',how = 'inner')
  .rename({'treningsdato':'Treningsdato'})
  )
+
+ return df
+
+def prep(df):
+
+ # Henter ut div dato kolonner 
+ df = (df
+       
+ # Henter ut år måned dag
+ .with_columns(pl.col('Treningsdato').dt.year().alias('År'),
+               pl.col('Treningsdato').dt.month().alias('Måned'),
+               pl.col('Treningsdato').dt.weekday().alias('Dag')
+               )
+ )
+ 
+ 
+ # Mapper måned nr til navn
+ df = (df
+     .with_columns(
+      pl.when(pl.col("Måned") == 1).then(pl.lit("Januar"))
+      .when(pl.col("Måned") == 2).then(pl.lit("Februar"))
+      .when(pl.col("Måned") == 3).then(pl.lit("Mars"))
+      .when(pl.col("Måned") == 4).then(pl.lit("April"))
+      .when(pl.col("Måned") == 5).then(pl.lit("Mai"))
+      .when(pl.col("Måned") == 6).then(pl.lit("Juni"))
+      .when(pl.col("Måned") == 7).then(pl.lit("Juli"))
+      .when(pl.col("Måned") == 8).then(pl.lit("August"))
+      .when(pl.col("Måned") == 9).then(pl.lit("September"))
+      .when(pl.col("Måned") == 10).then(pl.lit("Oktober"))
+      .when(pl.col("Måned") == 11).then(pl.lit("November"))
+      .when(pl.col("Måned") == 12).then(pl.lit("Desember"))
+      .otherwise(pl.lit("Ukjent"))
+      .alias("Måned navn")
+     )
+     .with_columns(
+     pl.when(pl.col("Måned").is_in([12, 1, 2]))
+      .then(pl.lit("vinter"))
+      .when(pl.col("Måned").is_in([3, 4, 5]))
+      .then(pl.lit("vår"))
+      .when(pl.col("Måned").is_in([6, 7, 8]))
+      .then(pl.lit("sommer"))
+      .when(pl.col("Måned").is_in([9, 10, 11]))
+      .then(pl.lit("høst"))
+      .otherwise(pl.lit("ukjent"))
+      .alias("Årstid")
+  )
+ )
+
 
  return df
