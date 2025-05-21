@@ -2,11 +2,9 @@ import polars as pl
 import polars.selectors as cs
 from datetime import date
 
-df = pl.read_excel("treningsdata.xlsx")
-
 def prep(df):
 
-# Fikser på dato kolonne
+ # Fikser på dato kolonne
  df = (df
  .with_columns(pl.col('Dato').cast(pl.String).str.slice(0,4).alias('År'),
                pl.col('Dato').cast(pl.String).str.slice(4,2).alias('Måned'),
@@ -39,11 +37,8 @@ def prep(df):
       .otherwise(pl.lit("Ukjent"))
       .alias("Måned")
      )
- )
-
- # Identifiserer årstid
- df = df.with_columns(
-    pl.when(pl.col("Måned nr").is_in([12, 1, 2]))
+     .with_columns(
+     pl.when(pl.col("Måned nr").is_in([12, 1, 2]))
       .then(pl.lit("vinter"))
       .when(pl.col("Måned nr").is_in([3, 4, 5]))
       .then(pl.lit("vår"))
@@ -53,7 +48,9 @@ def prep(df):
       .then(pl.lit("høst"))
       .otherwise(pl.lit("ukjent"))
       .alias("Årstid")
+  )
  )
+
 
  return df
 
