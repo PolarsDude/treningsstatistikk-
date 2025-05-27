@@ -17,19 +17,24 @@ df = (df
 )
 
 # Henter ut sortert liste over måneder
-maaned_sort = df.select('Måned nr', 'Måned').unique().sort(by ='Måned nr',descending=False)['Måned'].to_list()
+maaned_sort = df.select('Måned', 'Måned navn').unique().sort(by ='Måned',descending=False)['Måned'].to_list()
 
-velg_aar = st.selectbox("Velg person:", sorted(df['Navn'].unique()),key="velg_person")
+# Lager valg på person
+velg_person = st.selectbox("Velg person:", sorted(df['Navn'].unique()),key="velg_person")
+
+# Lager valg på år 
+velg_aar = st.selectbox("Velg år:", df.select('År').unique().to_series().to_list(),key="velg_aar")
 
 
 topp_10 = (df
 .filter(pl.col('Avlyst trening')=='Nei',
         pl.col('Deltok')=='Ja',
-        pl.col('Navn')==st.session_state.velg_person
+        pl.col('Navn')==st.session_state.velg_person,
+        pl.col('År')==st.session_state.velg_aar
         )
-.group_by('Navn','Måned')
+.group_by('Navn','År','Måned')
 .agg(pl.col('Dato').n_unique().cast(pl.Int64).alias('Antall treninger'))
-.sort(by = ['Antall treninger'],descending=True)
+.sort(by = ['År','Måned','Antall treninger'],descending=[True,False,False])
 )
 
 fig, ax = plt.subplots()
@@ -61,13 +66,14 @@ st.markdown(
 
 treningsstreak = (df
 .filter(pl.col('Avlyst trening')=='Nei',
-        pl.col('Navn')==st.session_state.velg_person
+        pl.col('Navn')==st.session_state.velg_person,
+        pl.col('År')==st.session_state.velg_aar
         )       
 .group_by('Navn')
 .agg(pl.col('Dato').filter(pl.col('Deltok')=='Ja').n_unique().alias('Totalt antall treninger'),
      pl.col('Dato').filter(pl.col('Deltok')=='Ja').min().cast(pl.Date).alias('Første trening'),
      pl.col('Dato').filter(pl.col('Deltok')=='Ja').max().cast(pl.Date).alias('Siste trening'),
-     pds.query_longest_streak(pl.col('Deltok')=='Ja').alias('Streak')
+     pds.query_longest_streak(pl.col('Deltok')=='Ja').alias('Lengste treningsstreak')
      )
 )
 
