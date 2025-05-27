@@ -1,6 +1,6 @@
 import polars as pl
 import polars_ds as pds
-from utils import prep
+from utils import prep,dato_mapping_pub_trening,datoformat_mapping
 import streamlit as st
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -10,7 +10,11 @@ st.title("Spillerstatistikk")
 df = pl.read_excel("treningsdata.xlsx")
 
 # Transformer dataene
-df = prep(df)
+df = (df
+.pipe(datoformat_mapping)
+.pipe(dato_mapping_pub_trening)
+.pipe(prep)
+)
 
 # Henter ut sortert liste over måneder
 maaned_sort = df.select('Måned nr', 'Måned').unique().sort(by ='Måned nr',descending=False)['Måned'].to_list()
