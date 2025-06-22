@@ -1,0 +1,121 @@
+---
+title: "Statistikkrapport for første halvår 2025"
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+# Introduksjon
+Det første halvåret i 2025 har vist en eksploderende interesse for å delta på treninger. Nytt for i år er at treninger nå arrangeres hver onsdag, og ikke mandag. I tillegg til dette har det blitt satset på å "dulte" i folk, og en ny daglig leder har blitt ansatt etter at Sindre Haukefer Hauan fikk sparken. Disse endringene har hatt en effekt. Vi vil denne statistikk rapporten vise frem spennende statistikk. 
+```{python}
+
+#| echo: false
+#| warning: false
+
+!uv pip install polars --system
+!uv pip install polars_xdt --system
+!uv pip install great_tables --system
+!uv pip install plotnine --system
+
+
+```
+
+```{python}
+
+#| echo: false
+#| warning: false
+
+import polars as pl 
+from great_tables import GT 
+import polars_xdt as xdt
+import polars.selectors as cs
+import seaborn as sns
+from utils import prep,dato_mapping_pub_trening,datoformat_mapping
+import matplotlib.pyplot as plt
+from datetime import date
+
+
+```
+
+```{python}
+#| echo: false
+#| warning: false
+
+# Les dataene
+df = pl.read_excel("treningsdata.xlsx")
+
+# Kjør dataprep 
+df = (df
+.pipe(datoformat_mapping)
+.pipe(dato_mapping_pub_trening)
+.pipe(prep)
+)
+
+```
+
+# Nøkkeltall
+
+```{python}
+#| echo: false
+#| warning: false
+
+
+GT(df
+.filter(pl.col('År').eq(2025)
+ .or_(
+    pl.col('År').eq(2024)
+   .and_(pl.col('Måned')<=6)
+    )
+  )
+.group_by('År')
+.agg(
+
+ pl.col('Dato')
+  .n_unique()
+  .alias('Totalt antall treninger'),
+
+ pl.col('Dato')
+ .filter(pl.col('Deltok')=='Ja',
+         pl.col('Avlyst trening')=='Nei'
+ )
+ .n_unique()
+ .alias('Antall arrangerte treninger')
+
+)
+
+.sort(by =['År'],descending = False)
+.with_columns(cs.contains(" ").shift(1).name.suffix(" forrige år"))
+.drop_nulls()
+.select('Totalt antall treninger',
+'Totalt antall treninger forrige år',
+'Antall arrangerte treninger',
+'Antall arrangerte treninger forrige år'
+)
+#.with_columns(pl.col('Totalt antall treninger').sub()
+)
+
+
+```
+
+
+```{python}
+#| echo: false
+#| warning: false
+
+
+(df
+.group_by('År')
+.agg(
+ 
+ pl.col('Navn')
+ .n_unique()
+ .alias('Antall personer som har stemt')
+
+
+)
+
+.sort(by =['År'],descending = False)
+
+)
+```
