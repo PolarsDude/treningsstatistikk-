@@ -27,7 +27,9 @@ Det første halvåret i 2025 har vist en eksploderende interesse for å delta p�
 #| warning: false
 
 import polars as pl 
+import polars_ds as pds
 from great_tables import GT 
+from plotnine import ggplot,geom_col, aes, geom_bar, labs, coord_flip, theme_bw
 import polars_xdt as xdt
 import polars.selectors as cs
 import seaborn as sns
@@ -52,9 +54,21 @@ df = (df
 .pipe(prep)
 )
 
+
+df_sub = (df
+.filter(pl.col('År').eq(2025)
+ .or_(
+    pl.col('År').eq(2024)
+   .and_(pl.col('Måned')<=6)
+    )
+  )
+)
+
 ```
 
 # Nøkkeltall
+
+I dette kapittelet presenterer vi nøkkeltall for inneværende halvår, sammenlignet med samme periode i fjor. Den første tabellen viser antall gjennomførte treninger. Totalt er det arrangert flere treninger i år enn i fjor. Dette tallet inkluderer både avlyste og gjennomførte treninger. Ca. 90& av alle arrangerte treninger ble gjennomført. Denne prosentandelen var omtrent halvert i fjor. 
 
 ```{python}
 #| echo: false
@@ -99,23 +113,160 @@ GT(df
 ```
 
 
+Både stemmeaktiviteten og antall personer som har vært på trening har økt. 
 ```{python}
 #| echo: false
 #| warning: false
 
 
-(df
+GT(df
+.filter(pl.col('År').eq(2025)
+ .or_(
+    pl.col('År').eq(2024)
+   .and_(pl.col('Måned')<=6)
+    )
+  )
 .group_by('År')
 .agg(
  
  pl.col('Navn')
  .n_unique()
- .alias('Antall personer som har stemt')
+ .alias('Antall personer som har stemt'),
+
+ pl.col('Navn')
+ .filter(pl.col('Deltok')=='Ja',
+         pl.col('Avlyst trening')=='Nei'
+ )
+ .n_unique()
+ .alias('Antall personer som har deltatt på trening')
 
 
 )
 
 .sort(by =['År'],descending = False)
+.with_columns(cs.contains(" ").shift(1).name.suffix(" forrige år"))
+.drop_nulls()
+.select('Antall personer som har stemt',
+'Antall personer som har stemt forrige år',
+'Antall personer som har deltatt på trening',
+'Antall personer som har deltatt på trening forrige år'
+)
+)
+```
+
+```{python}
+#| echo: false
+#| warning: false
+
+antall_treninger_per_maaned = (df
+.filter(pl.col('År').eq(2025)
+ .or_(
+    pl.col('År').eq(2024)
+   .and_(pl.col('Måned')<=6)
+    ),
+         pl.col('Avlyst trening')=='Nei'
+        )
+.group_by('År','Måned navn','Måned')
+.agg(pl.col('Treningsdato').n_unique().alias('Antall treninger'))
+.sort(by = ['Måned','År'])
+.with_columns(pl.col('År').cast(pl.Utf8),
+pl.col('Måned navn').cast(pl.Categorical))
 
 )
+
+
+
+(
+    ggplot(antall_treninger_per_maaned, aes(x="Måned navn", y="Antall treninger", fill="År"))
+    + geom_col(stat="identity", position="dodge")  # modified
+    + theme_bw()
+    + labs(x = "",y = "",title="Antall treninger fordelt på måned")
+)
+
+
+```
+
+# Spillerstatistikk
+
+Mange spillere har flere treninger i år sammenlignet med i fjor. Dette kan være en effekt av at daglig leder har benyttet metoden "dulting" for å få spillere til å komme på trening. 
+
+```{python}
+#| echo: false
+#| warning: false
+
+
+
+
+
+
+totalt_antall_treninger = (df_sub
+.group_by('Navn','År')
+.agg(
+ 
+
+
+ pl.col('Dato')
+ .filter(pl.col('Deltok')=='Ja',
+         pl.col('Avlyst trening')=='Nei'
+ )
+ .n_unique()
+ .alias('Antall treninger')
+)
+
+.pivot(index = ['Navn'],on = 'År',values = ['Antall treninger'])
+.fill_null(0)
+.with_columns(pl.all().exclude('Navn').cast(pl.Int64))
+.rename({'2024':'Antall treninger første halvår i 2024','2025':'Antall treninger første halvår i 2025'})
+.sort(by = ['Antall treninger første halvår i 2025'],descending = True)
+.with_columns(
+pl.col('Antall treninger første halvår i 2025').sub(pl.col('Antall treninger første halvår i 2024')).alias('Differanse'),
+pl.mean_horizontal(pl.all().exclude('Navn').alias('Gjennomsnittlig antall treninger første halvår')))
+
+)
+
+(GT(totalt_antall_treninger)
+)
+
+```
+
+
+```{python}
+#| echo: false
+#| warning: false
+
+(df_sub
+.filter(pl.col('År')==2025,
+pl.col('Avlyst trening')=='Nei',
+pl.col('Deltok')
+sa)))
+.group_by('Navn')
+
+)
+
+```
+
+Denne tabellen viser den lengste treningsstreaken per spiller. Igjen ser vi at det er Stian Nyheim som har knallgode tall. Det er også verdt nevne at nysegnineringen Jonas Tron Hatlem har imponerende tall. 
+
+```{python}
+
+#| echo: false
+#| warning: false
+
+GT(df_sub
+.filter(pl.col('Avlyst trening')=='Nei')
+.group_by('Navn','År')
+.agg(
+ 
+
+ pds.query_longest_streak(pl.col('Deltok')=='Ja').alias('Lengste treningsstreak')
+
+)
+
+.pivot(index = ['Navn'],on = 'År',values = ['Lengste treningsstreak'])
+.fill_null(0)
+.sort('2025',descending = True)
+.rename({'2024':'Lengste treningsstreak i 2024','2025':'Lengste treningsstreak i 2025'})
+)
+
+
 ```
