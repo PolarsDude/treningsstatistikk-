@@ -27,9 +27,10 @@ Det første halvåret i 2025 har vist en eksploderende interesse for å delta p�
 #| warning: false
 
 import polars as pl 
+import numpy as np
 import polars_ds as pds
 from great_tables import GT 
-from plotnine import ggplot,geom_col, aes, geom_bar, labs, coord_flip, theme_bw
+from plotnine import ggplot,geom_col, geom_hline,aes, geom_bar,geom_line,scale_y_continuous ,labs, coord_flip, theme_bw
 import polars_xdt as xdt
 import polars.selectors as cs
 import seaborn as sns
@@ -154,6 +155,43 @@ GT(df
 )
 ```
 
+
+```{python}
+#| echo: false
+#| warning: false
+antall_deltakere =  (df_sub
+.filter(
+ pl.col('Avlyst trening')=='Nei',
+ pl.col('Deltok')=='Ja'
+ )
+.group_by('Dato','År')
+.agg(pl.col('Navn').n_unique().alias('Antall deltakere'))
+
+.with_columns(pl.col('År').cast(pl.Utf8),
+pl.col('Antall deltakere').mean().over('År').alias('Snitt per periode'))
+.sort(by = ['Dato'])
+
+)
+
+# Hent ut gjennomsnitt
+gj_antall_deltakere_2024 = antall_deltakere.select('År','Snitt per periode').filter(pl.col('År')=='2024').drop('År').unique().to_series()[0]
+
+gj_antall_deltakere_2025 = antall_deltakere.select('År','Snitt per periode').filter(pl.col('År')=='2025').drop('År').unique().to_series()[0]
+
+(
+    ggplot(antall_deltakere, aes(x="Dato", y="Antall deltakere",color = 'År'))
+    + geom_line()
+    +scale_y_continuous(breaks=np.arange(0, antall_deltakere["Antall deltakere"].max()+1, 1))
+    +theme_bw()
+    +geom_hline(yintercept=gj_antall_deltakere_2024,color = 'red',linetype = 'dashed')
+    +geom_hline(yintercept=gj_antall_deltakere_2025,color = 'blue',linetype = 'dashed')
+    +labs(x = "",y = "",title="Antall deltakere fordelt på dato og periode.\nBlå horisontal linje er gjennomsnittlig antall deltakere\nfor 2025, mens rød er for 2024.")
+)
+
+
+
+```
+
 ```{python}
 #| echo: false
 #| warning: false
@@ -196,9 +234,6 @@ Mange spillere har flere treninger i år sammenlignet med i fjor. Dette kan vær
 
 
 
-
-
-
 totalt_antall_treninger = (df_sub
 .group_by('Navn','År')
 .agg(
@@ -230,20 +265,6 @@ pl.mean_horizontal(pl.all().exclude('Navn').alias('Gjennomsnittlig antall trenin
 ```
 
 
-```{python}
-#| echo: false
-#| warning: false
-
-(df_sub
-.filter(pl.col('År')==2025,
-pl.col('Avlyst trening')=='Nei',
-pl.col('Deltok')
-sa)))
-.group_by('Navn')
-
-)
-
-```
 
 Denne tabellen viser den lengste treningsstreaken per spiller. Igjen ser vi at det er Stian Nyheim som har knallgode tall. Det er også verdt nevne at nysegnineringen Jonas Tron Hatlem har imponerende tall. 
 
