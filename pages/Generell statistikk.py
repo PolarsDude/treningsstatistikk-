@@ -37,7 +37,7 @@ antall_treninger_per_mnd = (df
      .alias('Antall avlyste treninger'),
      
      pl.col('Navn')
-     .filter(pl.col('Deltok')=='Ja')
+     .filter(pl.col('Deltok')=='Ja',pl.col('Avlyst trening')=='Nei')
      .len()
      .truediv(pl.col('Treningsdato').filter(pl.col('Avlyst trening')=='Nei').n_unique())
      .alias('Antall per trening')
@@ -60,7 +60,7 @@ antall_treninger = (df
      pl.col('Treningsdato').filter(pl.col('Avlyst trening')=='Ja').n_unique().alias('Antall avlyste treninger'),
 
      pl.col('Navn')
-     .filter(pl.col('Deltok')=='Ja')
+     .filter(pl.col('Deltok')=='Ja',pl.col('Avlyst trening')=='Nei')
      .len()
      .truediv(pl.col('Treningsdato').filter(pl.col('Avlyst trening')=='Nei').n_unique())
      .alias('Antall per trening'))
