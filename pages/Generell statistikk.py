@@ -21,6 +21,7 @@ df = (df
 .pipe(datoformat_mapping)
 .pipe(dato_mapping_pub_trening)
 .pipe(prep)
+#.drop_nulls()
 )
 
 # Antall treninger per måned

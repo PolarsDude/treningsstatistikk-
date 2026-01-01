@@ -21,6 +21,7 @@ df = (df
 .pipe(datoformat_mapping)
 .pipe(dato_mapping_pub_trening)
 .pipe(prep)
+#.drop_nulls()
 )
 
 # Funksjon for å få statistikk på kombinasjoner. Dersom antall_kombinasjon er lik 3 betyr det at vi er interessert i tripplett
